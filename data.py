@@ -5,7 +5,7 @@ import json
 
 base_url = 'https://www.alphavantage.co'
 symbol = 'BTc'
-url = f'{base_url}/query?function=CRYPTO_INTRADAY&symbol={symbol}&market=CAD&interval=5min&apikey={api_key}'
+url = f'{base_url}/query?function=CRYPTO_INTRADAY&symbol={symbol}&market=CAD&interval=15min&apikey={api_key}'
 
 res = requests.get(url)
 data = json.loads(res.content)
