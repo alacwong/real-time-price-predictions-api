@@ -2,3 +2,5 @@ venv/
 .idea
 archive.zip
 dataset.csv
+.DS_Store
+**__pycache__/
