@@ -8,15 +8,14 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
-
 @app.route('/')
 def hello_world():
     current_data = get_finnhub_data()
-    model_input = parse_real_time_data(current_data)
+    list_input, model_input = parse_real_time_data(current_data)
     output = evaluate(model_input)
 
     return {
-        'current': current_data,
+        'current': list_input,
         'prediction': output
     }
 

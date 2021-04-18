@@ -51,7 +51,7 @@ def parse_real_time_data(data):
     model_input = torch.cat((high, low, close, volume), 2)
 
     # print(model_input.shape)
-    return model_input
+    return data['c'], model_input
 
     # with open('data.json', 'r') as f:
     #     data = json.load(f)
