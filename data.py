@@ -4,6 +4,7 @@ import json
 import numpy as np
 import csv
 import pickle
+import time
 
 
 def get_real_time_data():
@@ -101,4 +102,6 @@ def process_data():
 
 
 if __name__ == '__main__':
+    start = time.time()
     process_data()
+    print(f'Generated dataset in {time.time() - start} s')
