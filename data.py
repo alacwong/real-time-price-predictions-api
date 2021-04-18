@@ -2,6 +2,7 @@ import requests
 from config import api_key
 import json
 import pandas as pd
+import numpy as np
 
 
 def get_real_time_data():
@@ -19,7 +20,7 @@ def get_real_time_data():
         data = json.load(f)
 
 
-def process_data():
+def get_disjoint_sets():
     dataset = ''
     df = pd.read_csv(dataset)
     df = df.dropna()
@@ -51,4 +52,44 @@ def process_data():
         d[len(x)] = x
 
     set_lengths.sort(reverse=True)
-    return [d[set_lengths[i]] for i in range(50)]
+    return [d[set_lengths[i]] for i in range(20)]
+
+
+def to_train(contiguous_set):
+    """
+    partition data for training
+    :return:
+    """
+
+    training_data = []
+    training_labels = []
+    for i in range(len(contiguous_set) - 3000):
+        train = [contiguous_set[i + j] for j in range(1500, 0, 5)]
+        labels = [contiguous_set[i + j] for j in range(3000, 1500, 5)]
+
+        for j in range(1500):
+            _, _, _, high, low, close, volume, *rest = train[j]
+            train.append(
+                [high, low, close, volume]
+            )
+            _, _, _, _, _, _, _, _, price = labels[j]
+            labels.append(price)
+
+    return training_data, training_labels
+
+
+def process_data():
+    """
+    :return:
+    """
+
+    training_data, labels = [], []
+
+    disjoint_sets = get_disjoint_sets()
+
+    for disjoint_set in disjoint_sets:
+        train, label = to_train(disjoint_set)
+        training_data = training_data + train
+        labels = labels + label
+
+    return np.array(training_data), np.array(labels)
