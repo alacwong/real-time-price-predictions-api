@@ -8,14 +8,14 @@ path = 'nn_model'
 load = True
 train = False
 epochs = 10000
-lr = 0.00001    # 0.0001
+lr = 0.00001  # 0.0001
 
 sliding_dim = 100
 features_dim = 4
 output_dim = 1
 batch_size = 32
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cpu')
 
 class Model(torch.nn.Sequential):
     def __init__(self):
@@ -49,6 +49,7 @@ class Model(torch.nn.Sequential):
         # exit()
 
         return super().forward(input) * stds + means
+
 
 if __name__ == '__main__':
     # ----------DATA PROCESSING---------------
@@ -119,7 +120,6 @@ if __name__ == '__main__':
 
                 y = model(x)
 
-
                 assert x.shape[0] == y.shape[0]
                 assert y.shape[1] == y_true.shape[1]
 
@@ -154,8 +154,7 @@ if __name__ == '__main__':
         torch.save(model.state_dict(), path)
         torch.save(optim.state_dict(), path + "_optim")
 
-
-    #-----------PLOT-------------
+    # -----------PLOT-------------
     example_i = 60000
     example_x = X_data[example_i].unsqueeze(dim=0)
     # print(example_x)
