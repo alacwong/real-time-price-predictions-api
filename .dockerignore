@@ -2,7 +2,8 @@ venv
 dataset.csv
 disjoint_sets.json
 README.md
-
-
-
-
+dataset_1.csv
+dataset.csv
+data.pkl
+nn_model
+nn_model_optim

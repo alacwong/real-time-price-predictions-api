@@ -1,5 +1,8 @@
 from flask import Flask
 import os
+from nn_evaluate import evaluate
+from data import get_finnhub_data
+from data import parse_real_time_data
 
 app = Flask(__name__)
 
@@ -9,9 +12,13 @@ y = [27549.646484375, 27482.6328125, 27422.19140625, 27392.548828125, 27473.2031
 
 @app.route('/')
 def hello_world():
+    current_data = get_finnhub_data()
+    model_input = parse_real_time_data(current_data)
+    output = evaluate(model_input)
+
     return {
         'current': x,
-        'prediction': y
+        'prediction': output
     }
 
 if __name__ == '__main__':

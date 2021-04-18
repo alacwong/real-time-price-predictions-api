@@ -1,26 +1,70 @@
 import requests
 from config import api_key
+from config import finn_api_key
 import json
 import numpy as np
 import csv
 import pickle
+import datetime
+import torch
+from torch import Tensor
 import time
 
 
-def get_real_time_data():
-    base_url = 'https://www.alphavantage.co'
-    symbol = 'BTc'
-    url = f'{base_url}/query?function=CRYPTO_INTRADAY&symbol={symbol}&market=CAD&interval=15min&apikey={api_key}'
+# def get_real_time_data():
+#     base_url = 'https://www.alphavantage.co'
+#     symbol = 'BTc'
+#     url = f'{base_url}/query?function=CRYPTO_INTRADAY&symbol={symbol}&market=CAD&interval=15min&apikey={api_key}'
+#
+#     res = requests.get(url)
+#     data = json.loads(res.content)
+#     print(data)
+#     with open('data.json', 'w')as f:
+#         json.dump(data, f)
 
+def get_finnhub_data():
+    current_time = time.time().__round__()
+    from_time = current_time - 24 * 60 * 60 - 4 * 15 * 60
+    to_time = current_time
+    print(to_time)
+    url = f'https://finnhub.io/api/v1/crypto/candle?symbol=BINANCE:BTCUSDT&resolution=15&from={from_time}&to={to_time}&token=c1tvgbaad3ia4h4uh9ag'
     res = requests.get(url)
     data = json.loads(res.content)
     print(data)
     with open('data.json', 'w')as f:
         json.dump(data, f)
 
-    with open('data.json', 'r') as f:
-        data = json.load(f)
+    return data
 
+def parse_real_time_data(data):
+    # with open('data.json', 'r') as f:
+    #     data = json.load(f)
+
+    # print(len(data['c']))
+
+    high = Tensor(data['h']).unsqueeze(dim=0).unsqueeze(dim=2)
+    low = Tensor(data['l']).unsqueeze(dim=0).unsqueeze(dim=2)
+    close = Tensor(data['c']).unsqueeze(dim=0).unsqueeze(dim=2)
+    volume = Tensor(data['v']).unsqueeze(dim=0).unsqueeze(dim=2)
+
+    model_input = torch.cat((high, low, close, volume), 2)
+
+    # print(model_input.shape)
+    return model_input
+
+    # with open('data.json', 'r') as f:
+    #     data = json.load(f)
+    #
+    # date_string = data['Meta Data']['6. Last Refreshed']
+    #
+    # print(data)
+    # date_parsed = time.strptime(date_string, "%Y-%m-%d %H:%M:%S")
+    # print(date_parsed)
+    #
+    # # for i in range(0, 100):
+    # #     date_parsed.
+    #
+    # # print(data['Time Series Crypto (15min)'][date])
 
 def get_disjoint_sets():
     prev_timestamp = 0
@@ -102,6 +146,9 @@ def process_data():
 
 
 if __name__ == '__main__':
-    start = time.time()
-    process_data()
-    print(f'Generated dataset in {time.time() - start} s')
+    # start = time.time()
+    # process_data()
+    # print(f'Generated dataset in {time.time() - start} s')
+
+    # get_finnhub_data()
+    parse_real_time_data(2)
