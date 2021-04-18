@@ -1,3 +1,3 @@
 # real-time-price-predictions-api
 
-Api for real-time Bitcoine price predictions
+Api for real-time Bitcoin price predictions
