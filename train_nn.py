@@ -55,6 +55,7 @@ class Model(torch.nn.Sequential):
 
         return super().forward(input) * stds + means
 
+
 if __name__ == '__main__':
     # ----------DATA PROCESSING---------------
 
@@ -124,7 +125,6 @@ if __name__ == '__main__':
                 # print(y_true.shape)
 
                 y = model(x)
-
 
                 assert x.shape[0] == y.shape[0]
                 assert y.shape[1] == y_true.shape[1]

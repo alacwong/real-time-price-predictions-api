@@ -36,6 +36,7 @@ def get_finnhub_data():
 
     return data
 
+
 def parse_real_time_data(data):
     # with open('data.json', 'r') as f:
     #     data = json.load(f)
@@ -65,6 +66,7 @@ def parse_real_time_data(data):
     # #     date_parsed.
     #
     # # print(data['Time Series Crypto (15min)'][date])
+
 
 def get_disjoint_sets():
     prev_timestamp = 0
