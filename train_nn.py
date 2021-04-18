@@ -8,14 +8,14 @@ path = 'nn_model'
 load = True
 train = False
 epochs = 10000
-lr = 0.00001    # 0.0001
+lr = 0.00003    # 0.00003, 0.0001 log loss
 
 sliding_dim = 100
 features_dim = 4
 output_dim = 1
 batch_size = 32
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cpu')
 
 class Model(torch.nn.Sequential):
     def __init__(self):
@@ -123,8 +123,10 @@ if __name__ == '__main__':
                 assert x.shape[0] == y.shape[0]
                 assert y.shape[1] == y_true.shape[1]
 
-                loss_raw = 1e-7 * criterion(y, y_true)
-                loss_spread = 1e-8 * torch.sum((y.std(dim=0) - y_true.std(dim=0)) * (y.std(dim=0) - y_true.std(dim=0)))
+                y = torch.log(y)
+                y_true = torch.log(y_true)
+                loss_raw = criterion(y, y_true)
+                loss_spread = torch.sum((y.std(dim=0) - y_true.std(dim=0)) * (y.std(dim=0) - y_true.std(dim=0)))
                 loss = loss_raw + loss_spread
                 sum_loss_raw += loss_raw
                 sum_loss_spread += loss_spread
@@ -156,7 +158,7 @@ if __name__ == '__main__':
 
 
     #-----------PLOT-------------
-    example_i = 60000
+    example_i = 20000
     example_x = X_data[example_i].unsqueeze(dim=0)
     # print(example_x)
     show_x = example_x[:, :, 2].tolist()[0]
