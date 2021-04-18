@@ -1,8 +1,9 @@
 import requests
 from config import api_key
 import json
-import pandas as pd
 import numpy as np
+import csv
+import pickle
 
 
 def get_real_time_data():
@@ -21,38 +22,40 @@ def get_real_time_data():
 
 
 def get_disjoint_sets():
-    dataset = ''
-    df = pd.read_csv(dataset)
-    df = df.dropna()
-
-    sets = []
+    prev_timestamp = 0
+    disjoint_sets = []
     current_set = []
-    prev_row = -1
-    count = 0
-    for row in df.iterrows():
-        count += 1
-        index = row[0]
-        if index == prev_row + 1:
-            current_set.append(row)
-        else:
-            sets.append(current_set)
-            current_set = [row]
+    with open('dataset.csv', 'r') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            keys = [row[key] for key in row]
+            if 'NaN' in keys:
+                continue
+            else:
+                data = {
+                    key: float(row[key]) for key in row
+                }
+                # print(data['Timestamp'], prev_timestamp + 60, data['Timestamp'] - (prev_timestamp + 60))
+                if data['Timestamp'] == prev_timestamp + 60:
+                    current_set.append(data)
+                else:
+                    disjoint_sets.append(current_set)
+                    current_set = [data]
+                prev_timestamp = data['Timestamp']
 
-        prev_row = index
+        if current_set:
+            disjoint_sets.append(current_set)
 
-        if count > 10:
-            break
-
-    if current_set:
-        sets.append(current_set)
-
-    set_lengths = [len(x) for x in sets]
-    d = {}
-    for x in sets:
-        d[len(x)] = x
+    set_lengths = [len(sets) for sets in disjoint_sets]
+    set_map = {}
+    for sets in disjoint_sets:
+        set_map[len(sets)] = sets
 
     set_lengths.sort(reverse=True)
-    return [d[set_lengths[i]] for i in range(20)]
+    with open('disjoint_sets.json', 'w') as f:
+        json.dump({
+            'disjoint_sets': [set_map[set_lengths[i]] for i in range(20)],
+        }, f)
 
 
 def to_train(contiguous_set):
@@ -64,16 +67,14 @@ def to_train(contiguous_set):
     training_data = []
     training_labels = []
     for i in range(len(contiguous_set) - 3000):
-        train = [contiguous_set[i + j] for j in range(1500, 0, 15)]
-        labels = [contiguous_set[i + j] for j in range(3000, 1500, 15)]
-
-        for j in range(1500):
-            _, _, _, high, low, close, volume, *rest = train[j]
-            train.append(
-                [high, low, close, volume]
+        train = [contiguous_set[i + j] for j in range(0, 1500, 15)]
+        labels = [contiguous_set[i + j] for j in range(1500, 3000, 15)]
+        for j in range(100):
+            training_data.append(
+                [train[j]['High'], train[j]['Low'], train[j]['Close'], train[j]['Volume_(BTC)']]
             )
-            _, _, _, _, _, _, _, _, price = labels[j]
-            labels.append(price)
+            price = labels[j]['Weighted_Price']
+            training_labels.append(price)
 
     return training_data, training_labels
 
@@ -85,11 +86,19 @@ def process_data():
 
     training_data, labels = [], []
 
-    disjoint_sets = get_disjoint_sets()
+    with open('disjoint_sets.json', 'r') as f:
+        disjoint_sets = json.load(f)['disjoint_sets']
 
     for disjoint_set in disjoint_sets:
         train, label = to_train(disjoint_set)
         training_data = training_data + train
         labels = labels + label
 
-    return np.array(training_data), np.array(labels)
+    data = {'training': np.array(training_data), 'labels': np.array(labels)}
+
+    with open('data.pkl', 'wb') as f:
+        pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+
+if __name__ == '__main__':
+    process_data()
