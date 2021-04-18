@@ -6,9 +6,9 @@ import pickle
 
 path = 'nn_model'
 load = True
-train = False
+train = True
 epochs = 10000
-lr = 0.00003    # 0.00003, 0.0001 log loss
+lr = 0.0001   # 0.00003, 0.0001 log loss
 
 sliding_dim = 100
 features_dim = 4
@@ -30,6 +30,7 @@ class Model(torch.nn.Sequential):
         means = []
         stds = []
 
+        z = input.std(dim=1)[::, 2]
         for i in range(input.shape[0]):
             mean = torch.mean(input[i], 0)
             input[i] -= mean
@@ -38,6 +39,10 @@ class Model(torch.nn.Sequential):
 
             means += [mean[2]]
             stds += [std[2]]
+
+        # print(stds)
+        # print(z)
+        # exit()
 
         input = torch.reshape(input, (-1, sliding_dim * features_dim)).to(device)
         means = Tensor(means).reshape((input.shape[0], -1)).to(device)
@@ -105,6 +110,7 @@ if __name__ == '__main__':
     count = 0
     sum_loss = 0
     sum_loss_raw = 0
+    sum_loss_smooth = 0
     sum_loss_spread = 0
 
     if train:
@@ -126,17 +132,22 @@ if __name__ == '__main__':
                 y = torch.log(y)
                 y_true = torch.log(y_true)
                 loss_raw = criterion(y, y_true)
-                loss_spread = torch.sum((y.std(dim=0) - y_true.std(dim=0)) * (y.std(dim=0) - y_true.std(dim=0)))
+                loss_spread = 0.1 * torch.sum((y.std(dim=1) - y_true.std(dim=1)) * (y.std(dim=1) - y_true.std(dim=1)))
+                def spread(z):
+                    return z - z.roll(-1, 1)
+                loss_smooth = 0.03 * torch.sum((spread(y) - spread(y_true)) * (spread(y) - spread(y_true)))
                 loss = loss_raw + loss_spread
                 sum_loss_raw += loss_raw
                 sum_loss_spread += loss_spread
+                sum_loss_smooth = loss_smooth
                 sum_loss += loss
 
                 # print(e, y)
                 if count % 100 == 0:
-                    print(e, i, sum_loss / 100, sum_loss_raw / 100, sum_loss_spread / 100)
+                    print(e, i, sum_loss / 100, sum_loss_raw / 100, sum_loss_spread / 100, loss_smooth / 100)
                     sum_loss = 0
                     sum_loss_raw = 0
+                    sum_loss_smooth = 0
                     sum_loss_spread = 0
                     torch.save(model.state_dict(), path)
                     torch.save(optim.state_dict(), path + "_optim")
@@ -147,10 +158,10 @@ if __name__ == '__main__':
 
                 count += 1
 
-                if count > 10000:
+                if count > 1000:
                     break
 
-            if count > 10000:
+            if count > 1000:
                 break
 
         torch.save(model.state_dict(), path)
@@ -158,23 +169,27 @@ if __name__ == '__main__':
 
 
     #-----------PLOT-------------
-    example_i = 20000
-    example_x = X_data[example_i].unsqueeze(dim=0)
-    # print(example_x)
-    show_x = example_x[:, :, 2].tolist()[0]
-    print(show_x, type(show_x))
-    # exit()
-    assert example_x.shape == (1, sliding_dim, features_dim)
-    example_y = y_data[example_i].tolist()
-    example_y_pred = model(example_x).tolist()[0]
 
-    # print(example_y_pred)
-    # print(example_y + example_y_pred)
+    for example_i in range(0, 130000, 10000):
+        example_x = X_data[example_i].unsqueeze(dim=0)
+        # print(example_x)
+        show_x = example_x[:, :, 2].tolist()[0]
+        print(show_x, type(show_x))
+        # exit()
+        assert example_x.shape == (1, sliding_dim, features_dim)
+        example_y = y_data[example_i].tolist()
+        example_y_pred = model(example_x).tolist()[0]
 
-    print('show x', show_x)
-    print('show y', example_y_pred)
-    plt.plot([15 * i for i in range(0, sliding_dim)], show_x)
-    plt.plot([15 * sliding_dim + 15 * i for i in range(0, sliding_dim)], example_y_pred, label='prediction')
-    plt.plot([15 * sliding_dim + 15 * i for i in range(0, sliding_dim)], example_y, label='real')
-    plt.legend()
-    plt.show()
+        # print(example_y_pred)
+        # print(example_y + example_y_pred)
+
+        print('show x', show_x)
+        print('show y', example_y_pred)
+        plt.plot([15 * i for i in range(0, sliding_dim)], show_x)
+        plt.plot([15 * sliding_dim + 15 * i for i in range(0, sliding_dim)], example_y_pred, label='prediction')
+        plt.plot([15 * sliding_dim + 15 * i for i in range(0, sliding_dim)], example_y, label='real')
+        plt.legend()
+        # plt.show()
+        plt.savefig('plots/' + str(example_i))
+        plt.clf()
+
