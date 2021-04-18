@@ -64,8 +64,8 @@ def to_train(contiguous_set):
     training_data = []
     training_labels = []
     for i in range(len(contiguous_set) - 3000):
-        train = [contiguous_set[i + j] for j in range(1500, 0, 5)]
-        labels = [contiguous_set[i + j] for j in range(3000, 1500, 5)]
+        train = [contiguous_set[i + j] for j in range(1500, 0, 15)]
+        labels = [contiguous_set[i + j] for j in range(3000, 1500, 15)]
 
         for j in range(1500):
             _, _, _, high, low, close, volume, *rest = train[j]
