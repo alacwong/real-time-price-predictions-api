@@ -30,10 +30,8 @@ def get_finnhub_data():
     url = f'https://finnhub.io/api/v1/crypto/candle?symbol=BINANCE:BTCUSDT&resolution=15&from={from_time}&to={to_time}&token=c1tvgbaad3ia4h4uh9ag'
     res = requests.get(url)
     data = json.loads(res.content)
-    print(data)
     with open('data.json', 'w')as f:
         json.dump(data, f)
-
     return data
 
 
