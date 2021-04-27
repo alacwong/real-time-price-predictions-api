@@ -12,3 +12,5 @@ $ pip install requirements.txt
 $ python data.py
 $ flask run
 ```
+
+[Frontend Repository] (https://github.com/Sizbei/Real-Time-Price-Predictions)
